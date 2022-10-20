@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-tcp-over-socks
+spec:
+  minReadySeconds: 15
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-tcp-over-socks
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql-tcp-over-socks
+    spec:
+      containers:
+        - name: tos
+          imagePullPolicy: Always
+          image: ghcr.io/appuio/tcp-over-socks:latest
+          ports:
+            - containerPort: 3306
+              protocol: TCP
+          args:
+            - --port
+            - "3306"
+            - --socks5
+            - tailscale:1055
+            - --target
+            - 100.0.0.1:3306
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tunneled-db
+spec:
+  ports:
+  - name: db
+    port: 3306
+    protocol: TCP
+    targetPort: 3306
+  selector:
+    app: mysql-tcp-over-socks
+  type: ClusterIP
