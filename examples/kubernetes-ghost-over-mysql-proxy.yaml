@@ -1,0 +1,202 @@
+## Tailscale
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tailscale
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resourceNames: ["tailscale"]
+    resources: ["secrets"]
+    verbs: ["get", "update"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tailscale
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tailscale
+subjects:
+  - kind: ServiceAccount
+    name: tailscale
+roleRef:
+  kind: Role
+  name: tailscale
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tailscale-auth
+stringData:
+  TS_AUTH_KEY: YOURTAILSCALEKEY
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tailscale
+spec:
+  minReadySeconds: 15
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tailscale
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: tailscale
+    spec:
+      serviceAccountName: tailscale
+      containers:
+        - name: tailscale
+          imagePullPolicy: Always
+          image: ghcr.io/tailscale/tailscale:v1.33
+          ports:
+            - containerPort: 1055
+              name: tsproxy
+              protocol: TCP
+          env:
+            - name: TS_KUBE_SECRET
+              value: tailscale
+            - name: TS_USERSPACE
+              value: "true"
+            - name: TS_AUTH_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tailscale-auth
+                  key: TS_AUTH_KEY
+                  optional: true
+            - name: TS_SOCKS5_SERVER
+              value: 0.0.0.0:1055
+          volumeMounts:
+            - mountPath: /.cache/
+              name: cache
+      volumes:
+        - name: cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tailscale
+spec:
+  ports:
+  - name: tsproxy
+    port: 1055
+    protocol: TCP
+    targetPort: 1055
+  selector:
+    app: tailscale
+  type: ClusterIP
+
+## TCP over SOCKS5
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-tcp-over-socks
+spec:
+  minReadySeconds: 15
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-tcp-over-socks
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: mysql-tcp-over-socks
+    spec:
+      containers:
+        - name: tos
+          imagePullPolicy: Always
+          image: ghcr.io/appuio/tcp-over-socks:latest
+          ports:
+            - containerPort: 3306
+              protocol: TCP
+          args:
+            - --port
+            - "3306"
+            - --socks5
+            - tailscale:1055
+            - --target
+            - 100.66.5.47:3306
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+spec:
+  ports:
+  - name: db
+    port: 3306
+    protocol: TCP
+    targetPort: 3306
+  selector:
+    app: mysql-tcp-over-socks
+  type: ClusterIP
+  
+## Ghost
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghost
+spec:
+  minReadySeconds: 15
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghost
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ghost
+    spec:
+      containers:
+        - name: ghost
+          imagePullPolicy: Always
+          image: docker.io/ghost:latest
+          ports:
+            - containerPort: 2368
+              name: ghost
+              protocol: TCP
+          env:
+            - name: url
+              value: http://localhost:8080
+            - name: database__client
+              value: mysql
+            - name: database__connection__host
+              value: db
+            - name: database__connection__user
+              value: ghost
+            - name: database__connection__password
+              value: blubber
+            - name: database__connection__database
+              value: ghost
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghost
+spec:
+  ports:
+  - name: ghost
+    port: 2368
+    protocol: TCP
+    targetPort: 2368
+  selector:
+    app: ghost
+  type: ClusterIP

@@ -1,6 +1,6 @@
 # TCP over SOCKS5
 
-[![Build](https://img.shields.io/github/workflow/status/appuio/tcp-over-socks/Test)][build]
+[![Build](https://img.shields.io/github/workflow/status/appuio/tcp-over-socks/Build)][build]
 ![Go version](https://img.shields.io/github/go-mod/go-version/appuio/tcp-over-socks)
 [![Version](https://img.shields.io/github/v/release/appuio/tcp-over-socks)][releases]
 [![GitHub downloads](https://img.shields.io/github/downloads/appuio/tcp-over-socks/total)][releases]
@@ -28,6 +28,10 @@ GLOBAL OPTIONS:
 ## Running in Kubernetes / OpenShift
 
 See files in `examples/`.
+
+## Use-Cases
+
+* [Tailscale on APPUiO Cloud](https://docs.appuio.cloud/user/how-to/tailscale.html)
 
 ## Credits
 
