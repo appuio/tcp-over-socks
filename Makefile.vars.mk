@@ -1,9 +1,8 @@
 ## These are some common variables for Make
 
 PROJECT_ROOT_DIR = .
-# TODO: Adjust project meta
-PROJECT_NAME ?= go-bootstrap
-PROJECT_OWNER ?= vshn
+PROJECT_NAME ?= tcp-over-socks
+PROJECT_OWNER ?= appuio
 
 WORK_DIR = $(PWD)/.work
 

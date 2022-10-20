@@ -33,13 +33,6 @@ build-bin: fmt vet ## Build binary
 build-docker: build-bin ## Build docker image
 	$(DOCKER_CMD) build -t $(CONTAINER_IMG) .
 
-.PHONY: test
-test: test-go ## All-in-one test
-
-.PHONY: test-go
-test-go: ## Run unit tests against code
-	go test -race -coverprofile cover.out -covermode atomic ./...
-
 .PHONY: fmt
 fmt: ## Run 'go fmt' against code
 	go fmt ./...

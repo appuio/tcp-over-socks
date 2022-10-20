@@ -7,8 +7,7 @@ RUN \
     ca-certificates \
     tzdata
 
-# TODO: Adjust binary file name
-ENTRYPOINT ["go-bootstrap"]
-COPY go-bootstrap /usr/bin/
+ENTRYPOINT ["tcp-over-socks"]
+COPY tcp-over-socks /usr/bin/
 
 USER 65536:0
