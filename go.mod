@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/micro/cli/v2 v2.1.2
-	golang.org/x/net v0.33.0
+	golang.org/x/net v0.34.0
 )
 
 require (
