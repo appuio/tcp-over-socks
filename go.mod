@@ -2,7 +2,7 @@ module github.com/appuio/tcp-over-socks
 
 go 1.23.0
 
-toolchain go1.24.1
+toolchain go1.24.3
 
 require (
 	github.com/micro/cli/v2 v2.1.2
